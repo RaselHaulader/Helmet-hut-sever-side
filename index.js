@@ -69,7 +69,7 @@ async function run() {
             res.json(result)
         })
 
-        // save review to db
+        // save review to  db
         app.post('/addReview', async (req, res) => {
             const data = req.body
             const result = await reviewsCollection.insertOne(data);
