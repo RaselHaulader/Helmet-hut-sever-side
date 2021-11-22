@@ -155,6 +155,9 @@ async function run() {
 app.get('/', (req, res) => {
     res.send('hello')
 })
+app.get('/check', (req, res) => {
+    res.send('hello')
+})
 app.listen(port, () => {
     console.log('listening to port', port)
 })
