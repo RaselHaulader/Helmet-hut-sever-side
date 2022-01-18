@@ -4,9 +4,11 @@ const cors = require('cors')
 const port = process.env.PORT || 5000;
 const { MongoClient } = require('mongodb');
 const ObjectId = require('mongodb').ObjectId;
+const stripe = require('stripe')('sk_test_51JwhTVFt9uWPMDFcVHBw8PdRKx4sdgSCcCfCOGtoePdDj57rCHx3kuK1kNgCkeZJXBdXNoZ1QPE6KlqNxr3F8Hyt00fAFPXFih')
 require('dotenv').config()
 app.use(cors());
 app.use(express.json());
+
 
 const uri = `mongodb+srv://${process.env.USER}:${process.env.PASS}@cluster0.x89oq.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
@@ -43,8 +45,6 @@ async function run() {
             const result = await usersCollection.updateOne(filter, updateDoc, option);
             res.json(result);
         })
-
-
         // save orders
         app.post('/placeOrder', async (req, res) => {
             const order = req.body;
@@ -52,9 +52,6 @@ async function run() {
             const result = await ordersCollection.insertOne(order);
             res.json(result)
         })
-
-
-
         // get user orders
         app.get('/userOrder/:email', async (req, res) => {
             const email = req.params.email;
@@ -62,26 +59,22 @@ async function run() {
             const result = await ordersCollection.find(query).toArray();
             res.json(result);
         })
-
         // get all orders
         app.get('/allOrders', async (req, res) => {
             const result = await ordersCollection.find({}).toArray()
             res.json(result)
         })
-
         // save review to  db
         app.post('/addReview', async (req, res) => {
             const data = req.body
             const result = await reviewsCollection.insertOne(data);
             res.json(result);
         })
-
         // get reviews
         app.get('/allReviews', async (req, res) => {
             const result = await reviewsCollection.find({}).toArray();
             res.json(result)
         })
-
         //add product
         app.post('/addProduct', async (req, res) => {
             const product = req.body;
@@ -99,7 +92,6 @@ async function run() {
             res.json(result);
 
         })
-
         // check Admin role
         app.get('/checkAdminRole/:email', async (req, res) => {
             const user = req.params.email;
@@ -111,8 +103,6 @@ async function run() {
             }
             res.json({ admin })
         })
-
-
         // cancel user order
         app.post('/handleCancel', async (req, res) => {
             const id = req.body
@@ -120,7 +110,6 @@ async function run() {
             const result = await ordersCollection.deleteOne(filter);
             res.json(result)
         })
-
         // delete product
         app.post('/handleUpdateProduct', async (req, res) => {
             const id = req.body
@@ -128,7 +117,6 @@ async function run() {
             const result = await allProductsCollection.deleteOne(filter)
             res.json(result)
         })
-
         // update status
         app.post('/handleUpdateOrder', async (req, res) => {
             const data = req.body
@@ -144,6 +132,17 @@ async function run() {
                 const result = await ordersCollection.updateOne(filter, updateStatus);
                 res.json(result);
             }
+        })
+        // payment intent
+        app.post('/create-payment-intent', async (req, res) => {
+            const paymentInfo = req.body;
+            const amount = paymentInfo.price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency: 'usd',
+                amount: amount,
+                payment_method_types: ['card'],
+            });
+            res.json({ clientSecret: paymentIntent.client_secret })
         })
 
     } finally {
