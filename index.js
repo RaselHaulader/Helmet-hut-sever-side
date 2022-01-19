@@ -133,6 +133,27 @@ async function run() {
                 res.json(result);
             }
         })
+
+        // save cart info
+        app.post('/saveCart', async (req, res) => {
+            const orders = req.body
+            console.log(orders.email);
+            console.log(orders.orders);
+            const filter = { email: orders.email }
+            const updateDoc = { $set: { cart: orders.orders } }
+            const option = {upsert: true}
+            const result = await ordersCollection.updateOne(filter, updateDoc,option);
+            res.json(result);
+        })
+        // get cart details
+        app.post('/getCart', async (req, res) => {
+            const email = req.body.email;
+           console.log(email);
+           const filter = { email: email }
+           const result = await ordersCollection.findOne(filter)
+           console.log(result.cart);
+           res.json(result.cart)
+        })
         // payment intent
         app.post('/create-payment-intent', async (req, res) => {
             const paymentInfo = req.body;
