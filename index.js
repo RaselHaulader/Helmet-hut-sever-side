@@ -71,7 +71,7 @@ async function run() {
         })
         // get all orders
         app.get('/allOrders', async (req, res) => {
-            const result = await cartsCollection.find({}).toArray()
+            const result = await ordersCollection.find({}).toArray()
             res.json(result)
         })
         // save review to  db
@@ -117,7 +117,7 @@ async function run() {
         app.post('/handleCancel', async (req, res) => {
             const id = req.body
             const filter = { _id: ObjectId(id) }
-            const result = await cartsCollection.deleteOne(filter);
+            const result = await ordersCollection.deleteOne(filter);
             res.json(result)
         })
         // delete product
