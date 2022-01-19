@@ -20,6 +20,7 @@ async function run() {
         const helmetHut = client.db("helmetHut");
         const allProductsCollection = helmetHut.collection("allProducts");
         const usersCollection = helmetHut.collection("users");
+        const cartsCollection = helmetHut.collection("cart");
         const ordersCollection = helmetHut.collection("orders");
         const reviewsCollection = helmetHut.collection("reviews");
 
@@ -48,8 +49,17 @@ async function run() {
         // save orders
         app.post('/placeOrder', async (req, res) => {
             const order = req.body;
-            order.status = 'pending'
-            const result = await ordersCollection.insertOne(order);
+            const orders = order.orders;
+            const updatedOrder = orders.map(item => {
+                let updatedItem = item;
+                item.email = req.body.email;
+                item.status = "Paid";
+                const date = new Date()
+                item.date = date.toLocaleString()
+                return updatedItem
+            })
+            const options = { ordered: true };
+            const result = await ordersCollection.insertMany(updatedOrder, options);
             res.json(result)
         })
         // get user orders
@@ -61,7 +71,7 @@ async function run() {
         })
         // get all orders
         app.get('/allOrders', async (req, res) => {
-            const result = await ordersCollection.find({}).toArray()
+            const result = await cartsCollection.find({}).toArray()
             res.json(result)
         })
         // save review to  db
@@ -107,7 +117,7 @@ async function run() {
         app.post('/handleCancel', async (req, res) => {
             const id = req.body
             const filter = { _id: ObjectId(id) }
-            const result = await ordersCollection.deleteOne(filter);
+            const result = await cartsCollection.deleteOne(filter);
             res.json(result)
         })
         // delete product
@@ -137,22 +147,18 @@ async function run() {
         // save cart info
         app.post('/saveCart', async (req, res) => {
             const orders = req.body
-            console.log(orders.email);
-            console.log(orders.orders);
             const filter = { email: orders.email }
             const updateDoc = { $set: { cart: orders.orders } }
-            const option = {upsert: true}
-            const result = await ordersCollection.updateOne(filter, updateDoc,option);
+            const option = { upsert: true }
+            const result = await cartsCollection.updateOne(filter, updateDoc, option);
             res.json(result);
         })
         // get cart details
         app.post('/getCart', async (req, res) => {
             const email = req.body.email;
-           console.log(email);
-           const filter = { email: email }
-           const result = await ordersCollection.findOne(filter)
-           console.log(result.cart);
-           res.json(result.cart)
+            const filter = { email: email }
+            const result = await cartsCollection.findOne(filter)
+            res.json(result?.cart ? result.cart : [])
         })
         // payment intent
         app.post('/create-payment-intent', async (req, res) => {
@@ -181,4 +187,3 @@ app.get('/check', (req, res) => {
 app.listen(port, () => {
     console.log('listening to port', port)
 })
-
